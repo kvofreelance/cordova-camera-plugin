@@ -57,7 +57,7 @@
         <source-file src="src/android/CustomGallery.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/FileHelper.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/ExifHelper.java" target-dir="src/org/apache/cordova/camera" />
-        <source-file src="src/android/video_icon_cordova.png" target-dir="res/drawable/video_icon_cordova.png" />
+        <source-file src="src/android/video_icon_cordova.png" target-dir="res/drawable" />
 
         <js-module src="www/CameraPopoverHandle.js" name="CameraPopoverHandle">
             <clobbers target="CameraPopoverHandle" />
