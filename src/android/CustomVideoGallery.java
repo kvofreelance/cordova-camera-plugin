@@ -482,7 +482,7 @@ public class CustomVideoGallery extends Activity {
                 ivIconLP.addRule(RelativeLayout.ALIGN_PARENT_TOP);
                 ivIcon.setLayoutParams(ivIconLP);
                 ivIcon.setScaleType(ImageView.ScaleType.FIT_XY);
-                ivIcon.setImageResource(R.drawable.video_icon);
+                ivIcon.setImageResource(R.drawable.video_icon_cordova);
 
                 AlphaAnimation alpha = new AlphaAnimation(0.5F, 0.5F);
 				alpha.setDuration(0);
