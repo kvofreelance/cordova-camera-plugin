@@ -34,11 +34,25 @@
         </config-file>
         <config-file target="AndroidManifest.xml" parent="/*">
             <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+            <uses-permission android:name="android.permission.MANAGE_DOCUMENTS"/>
         </config-file>
         <config-file target="AndroidManifest.xml" parent="/manifest/application/">
             <activity android:name="org.apache.cordova.camera.CustomGallery" />
         </config-file>
+        <config-file target="AndroidManifest.xml" parent="/manifest/application/">
+            <activity android:name="org.apache.cordova.camera.AlbumActivity" />
+        </config-file>
+        <config-file target="AndroidManifest.xml" parent="/manifest/application/">
+            <activity android:name="org.apache.cordova.camera.AlbumVideoActivity" />
+        </config-file>
+        <config-file target="AndroidManifest.xml" parent="/manifest/application/">
+            <activity android:name="org.apache.cordova.camera.CustomVideoGallery" />
+        </config-file>
 
+        <source-file src="src/android/AlbumActivity.java" target-dir="src/org/apache/cordova/camera" />
+        <source-file src="src/android/AlbumInfo.java" target-dir="src/org/apache/cordova/camera" />
+        <source-file src="src/android/AlbumVideoActivity.java" target-dir="src/org/apache/cordova/camera" />
+        <source-file src="src/android/CustomVideoGallery.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/CameraLauncher.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/CustomGallery.java" target-dir="src/org/apache/cordova/camera" />
         <source-file src="src/android/FileHelper.java" target-dir="src/org/apache/cordova/camera" />

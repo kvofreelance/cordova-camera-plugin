@@ -18,24 +18,10 @@
 */
 package org.apache.cordova.camera;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.LOG;
-import org.apache.cordova.PluginResult;
-import org.json.JSONArray;
-import org.json.JSONException;
-
 import android.app.Activity;
+import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -46,10 +32,29 @@ import android.media.ExifInterface;
 import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
+
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.LOG;
+import org.apache.cordova.PluginResult;
+import org.json.JSONArray;
+import org.json.JSONException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
 
 /**
  * This class launches the camera view, allows the user to take a picture, closes the camera view,
@@ -94,6 +99,8 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
 
     private MediaScannerConnection conn;    // Used to update gallery app with newly-written files
     private Uri scanMe;                     // Uri of image to be added to content store
+
+    public String selectedVideo = "";
 
     /**
      * Executes the request and returns PluginResult.
@@ -236,6 +243,53 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
         return photo;
     }
 
+    static public Bitmap decodeSampledBitmapFromResourceMemOpt(InputStream inputStream, int reqWidth, int reqHeight) {
+
+        byte[] byteArr = new byte[0];
+        byte[] buffer = new byte[1024];
+        int len;
+        int count = 0;
+
+        try {
+            while ((len = inputStream.read(buffer)) > -1) {
+                if (len != 0) {
+                    if (count + len > byteArr.length) {
+                        byte[] newbuf = new byte[(count + len) * 2];
+                        System.arraycopy(byteArr, 0, newbuf, 0, count);
+                        byteArr = newbuf;
+                    }
+
+                    System.arraycopy(buffer, 0, byteArr, count, len);
+                    count += len;
+                }
+            }
+
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeByteArray(byteArr, 0, count, options);
+
+            if(!(reqHeight ==0 && reqWidth == 0)) {
+                options.inSampleSize = calculateSampleSize(options.outWidth, options.outHeight, reqWidth, reqHeight);
+            }
+
+            options.inPurgeable = true;
+            options.inInputShareable = true;
+            options.inJustDecodeBounds = false;
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+            return BitmapFactory.decodeByteArray(byteArr, 0, count, options);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            return null;
+        }
+    }
+
+    public int getAndroidVersion() {
+        return Integer.parseInt(Build.VERSION.RELEASE.split("\\.")[0]);
+    }
+
     /**
      * Get image from photo library.
      *
@@ -246,7 +300,16 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
     // TODO: Images selected from SDCARD don't display correctly, but from CAMERA ALBUM do!
     public void getImage(int srcType, int returnType) {
         if(this.maxSelectedLimit != 0) {
-            Intent intent = new Intent(this.cordova.getActivity(), CustomGallery.class);
+            Intent intent = null;
+            //if((getAndroidVersion() >= 4)) {
+                // If ANDROID version >= 4
+                intent = new Intent(this.cordova.getActivity(), AlbumActivity.class);
+
+            //} else {
+                // If ANDROID version < 4
+            //    intent = new Intent(this.cordova.getActivity(), CustomGallery.class);
+            //}
+            //Intent intent = new Intent(this.cordova.getActivity(), CustomGallery.class);
             intent.putExtra("maxSelectedLimit", this.maxSelectedLimit);
             if (this.cordova != null) {
                 this.cordova.startActivityForResult((CordovaPlugin) this, intent, (srcType + 1) * 16 + returnType + 1);
@@ -258,8 +321,24 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
                 intent.setType("image/*");
             }
             else if (this.mediaType == VIDEO) {
+                /*intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.setType("video/*");
-                title = GET_VIDEO;
+                title = GET_VIDEO;*/
+                //if((getAndroidVersion() >= 4)) {
+                    // If ANDROID version >= 4
+                    intent = new Intent(this.cordova.getActivity(), AlbumVideoActivity.class);
+
+                //} else {
+                    // If ANDROID version < 4
+                //    intent = new Intent(this.cordova.getActivity(), CustomVideoGallery.class);
+                //}
+
+                //intent = new Intent(this.cordova.getActivity(), CustomVideoGallery.class);
+                intent.putExtra("maxSelectedLimit", 1);
+                if (this.cordova != null) {
+                    this.cordova.startActivityForResult((CordovaPlugin) this, intent, (srcType + 1) * 16 + returnType + 1);
+                }
+                return;
             }
             else if (this.mediaType == ALLMEDIA) {
                 // I wanted to make the type 'image/*, video/*' but this does not work on all versions
@@ -280,10 +359,160 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
     public String getResponseString(ArrayList<Uri> imagesList) {
         String result = "";
         for (Uri uri : imagesList) {
-            result = result + uri.toString() + ";";
+            result = result + getPath(cordova.getActivity(), uri) + ";";
         }
         
         return result;
+    }
+
+    public String getRealPathFromURI(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        //try {
+            String[] proj = { MediaStore.Video.Media.DISPLAY_NAME, MediaStore.Video.Media.DATA };
+            cursor = context.getContentResolver().query(contentUri,  proj, null, null, null);
+        Log.d("VIDEO_PATH", cursor.getCount()+"");
+        Log.d("VIDEO_PATH", MediaStore.Video.Media.EXTERNAL_CONTENT_URI.getPath()+"");
+        Log.d("VIDEO_PATH", MediaStore.Video.Media.DISPLAY_NAME+"");
+            int column_index = cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME);
+        int column_index2 = cursor.getColumnIndex(MediaStore.Images.Media.DATA);
+        Log.d("VIDEO_PATH", column_index+"");
+            cursor.moveToFirst();
+        Log.d("VIDEO_PATH", cursor.getString(column_index)+"");
+        Log.d("VIDEO_PATH", cursor.getString(column_index2)+"");
+            return cursor.getString(column_index);
+        //} finally {
+          //  if (cursor != null) {
+            //    cursor.close();
+            //}
+        //}
+    }
+
+    public static String getPath(final Context context, final Uri uri) {
+
+        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+
+        // DocumentProvider
+        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+            // ExternalStorageProvider
+            if (isExternalStorageDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                if ("primary".equalsIgnoreCase(type)) {
+                    return Environment.getExternalStorageDirectory() + "/"
+                            + split[1];
+                }
+
+                // TODO handle non-primary volumes
+            }
+            // DownloadsProvider
+            else if (isDownloadsDocument(uri)) {
+
+                final String id = DocumentsContract.getDocumentId(uri);
+                final Uri contentUri = ContentUris.withAppendedId(
+                        Uri.parse("content://downloads/public_downloads"),
+                        Long.valueOf(id));
+
+                return getDataColumn(context, contentUri, null, null);
+            }
+            // MediaProvider
+            else if (isMediaDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                Uri contentUri = null;
+                if ("image".equals(type)) {
+                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                } else if ("video".equals(type)) {
+                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                } else if ("audio".equals(type)) {
+                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                }
+
+                final String selection = "_id=?";
+                final String[] selectionArgs = new String[] { split[1] };
+
+                return getDataColumn(context, contentUri, selection,
+                        selectionArgs);
+            }
+        }
+        // MediaStore (and general)
+        else if ("content".equalsIgnoreCase(uri.getScheme())) {
+            return getDataColumn(context, uri, null, null);
+        }
+        // File
+        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the value of the data column for this Uri. This is useful for
+     * MediaStore Uris, and other file-based ContentProviders.
+     *
+     * @param context
+     *            The context.
+     * @param uri
+     *            The Uri to query.
+     * @param selection
+     *            (Optional) Filter used in the query.
+     * @param selectionArgs
+     *            (Optional) Selection arguments used in the query.
+     * @return The value of the _data column, which is typically a file path.
+     */
+    public static String getDataColumn(Context context, Uri uri,
+                                       String selection, String[] selectionArgs) {
+
+        Cursor cursor = null;
+        final String column = "_data";
+        final String[] projection = { column };
+
+        try {
+            cursor = context.getContentResolver().query(uri, projection,
+                    selection, selectionArgs, null);
+            if (cursor != null && cursor.moveToFirst()) {
+                final int column_index = cursor.getColumnIndexOrThrow(column);
+                return cursor.getString(column_index);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
+    }
+
+    /**
+     * @param uri
+     *            The Uri to check.
+     * @return Whether the Uri authority is ExternalStorageProvider.
+     */
+    public static boolean isExternalStorageDocument(Uri uri) {
+        return "com.android.externalstorage.documents".equals(uri
+                .getAuthority());
+    }
+
+    /**
+     * @param uri
+     *            The Uri to check.
+     * @return Whether the Uri authority is DownloadsProvider.
+     */
+    public static boolean isDownloadsDocument(Uri uri) {
+        return "com.android.providers.downloads.documents".equals(uri
+                .getAuthority());
+    }
+
+    /**
+     * @param uri
+     *            The Uri to check.
+     * @return Whether the Uri authority is MediaProvider.
+     */
+    public static boolean isMediaDocument(Uri uri) {
+        return "com.android.providers.media.documents".equals(uri
+                .getAuthority());
     }
 
     /**
@@ -295,7 +524,7 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
      * @param intent            An Intent, which can return result data to the caller (various data can be attached to Intent "extras").
      */
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-
+        Log.d("EXPEREMENT", "onActivityResult");
         // Get src and dest types from request code
         int srcType = (requestCode / 16) - 1;
         int destType = (requestCode % 16) - 1;
@@ -426,7 +655,11 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
                         String imagesList = getResponseString(imagesListUri);
                         this.callbackContext.success(imagesList);
                     } else {
-                        this.callbackContext.success(uri.toString());
+                        //selectedVideo = getPath(cordova.getActivity(), uri);
+                        ArrayList<Uri> imagesListUri = intent.getParcelableArrayListExtra("selectedVideosArray");
+                        String imagesList = getResponseString(imagesListUri);
+                        this.callbackContext.success(imagesList);
+                        //this.callbackContext.success(selectedVideo);
                     }
                 }
                 else {
