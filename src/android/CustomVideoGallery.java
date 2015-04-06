@@ -330,7 +330,7 @@ public class CustomVideoGallery extends Activity {
 		        			holder.checkbox.setChecked(thumbnailsselection[position]);
 		        			holder.id = position;
 
-                            holder.checkbox.setVisibility(View.INVISIBLE);
+                            holder.checkbox.setVisibility(View.GONE);
                             holder.checkbox.setEnabled(false);
 
 		        			/*holder.checkbox.setOnClickListener(new OnClickListener() {
@@ -480,7 +480,7 @@ public class CustomVideoGallery extends Activity {
                 ivIconLP.addRule(RelativeLayout.ALIGN_PARENT_TOP);
                 ivIcon.setLayoutParams(ivIconLP);
                 ivIcon.setScaleType(ImageView.ScaleType.FIT_XY);
-                int videoIconResId = cordova.getActivity().getResources().getIdentifier("video_icon_cordova", "drawable", cordova.getActivity().getPackageName());
+                int videoIconResId = getBaseContext().getResources().getIdentifier("video_icon_cordova", "drawable", getBaseContext().getPackageName());
                 //Drawable closeIcon = activityRes.getDrawable(closeResId);
                 ivIcon.setImageResource(videoIconResId);
 
@@ -508,7 +508,7 @@ public class CustomVideoGallery extends Activity {
 			holder.imageview.setId(position);
 			holder.imageview.setTag(holder.checkbox);
 
-            holder.checkbox.setVisibility(View.INVISIBLE);
+            holder.checkbox.setVisibility(View.GONE);
             holder.checkbox.setEnabled(false);
 			/*holder.checkbox.setOnClickListener(new OnClickListener() {
 				
