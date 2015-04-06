@@ -30,8 +30,6 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
-import com.kvofreelance.camera.R;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -482,7 +480,9 @@ public class CustomVideoGallery extends Activity {
                 ivIconLP.addRule(RelativeLayout.ALIGN_PARENT_TOP);
                 ivIcon.setLayoutParams(ivIconLP);
                 ivIcon.setScaleType(ImageView.ScaleType.FIT_XY);
-                ivIcon.setImageResource(R.drawable.video_icon_cordova);
+                int videoIconResId = cordova.getActivity().getResources().getIdentifier("video_icon_cordova", "drawable", cordova.getActivity().getPackageName());
+                //Drawable closeIcon = activityRes.getDrawable(closeResId);
+                ivIcon.setImageResource(videoIconResId);
 
                 AlphaAnimation alpha = new AlphaAnimation(0.5F, 0.5F);
 				alpha.setDuration(0);
