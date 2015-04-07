@@ -639,17 +639,17 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
                 // If you ask for video or all media type you will automatically get back a file URI
                 // and there will be no attempt to resize any returned data
                 if (this.mediaType != PICTURE) {
-                    if(this.maxSelectedLimit != 0) {
+                    /*if(this.maxSelectedLimit != 0) {
                         ArrayList<Uri> imagesListUri = intent.getParcelableArrayListExtra("selectedImagesArray");
                         String imagesList = getResponseString(imagesListUri);
                         this.callbackContext.success(imagesList);
-                    } else {
+                    } else {*/
                         //selectedVideo = getPath(cordova.getActivity(), uri);
                         ArrayList<Uri> imagesListUri = intent.getParcelableArrayListExtra("selectedVideosArray");
                         String imagesList = getResponseString(imagesListUri);
                         this.callbackContext.success(imagesList);
                         //this.callbackContext.success(selectedVideo);
-                    }
+                   // }
                 }
                 else {
                     // This is a special case to just return the path as no scaling,
