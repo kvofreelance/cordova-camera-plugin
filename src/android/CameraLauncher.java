@@ -299,26 +299,16 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
      */
     // TODO: Images selected from SDCARD don't display correctly, but from CAMERA ALBUM do!
     public void getImage(int srcType, int returnType) {
-        if(this.maxSelectedLimit != 0) {
-            Intent intent = null;
-            //if((getAndroidVersion() >= 4)) {
-                // If ANDROID version >= 4
-                intent = new Intent(this.cordova.getActivity(), AlbumActivity.class);
 
-            //} else {
-                // If ANDROID version < 4
-            //    intent = new Intent(this.cordova.getActivity(), CustomGallery.class);
-            //}
-            //Intent intent = new Intent(this.cordova.getActivity(), CustomGallery.class);
-            intent.putExtra("maxSelectedLimit", this.maxSelectedLimit);
-            if (this.cordova != null) {
-                this.cordova.startActivityForResult((CordovaPlugin) this, intent, (srcType + 1) * 16 + returnType + 1);
-            }
-        } else {
             Intent intent = new Intent();
             String title = GET_PICTURE;
             if (this.mediaType == PICTURE) {
-                intent.setType("image/*");
+                if(this.maxSelectedLimit != 0) {
+                    intent = new Intent(this.cordova.getActivity(), AlbumActivity.class);
+                    intent.putExtra("maxSelectedLimit", this.maxSelectedLimit);
+                } else {
+                    intent.setType("image/*");
+                }
             }
             else if (this.mediaType == VIDEO) {
                 /*intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -353,7 +343,6 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
                 this.cordova.startActivityForResult((CordovaPlugin) this, Intent.createChooser(intent,
                         new String(title)), (srcType + 1) * 16 + returnType + 1);
             }
-        }
     }
 
     public String getResponseString(ArrayList<Uri> imagesList) {
