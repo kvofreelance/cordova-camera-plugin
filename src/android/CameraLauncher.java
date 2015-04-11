@@ -135,7 +135,7 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
             this.correctOrientation = args.getBoolean(8);
             this.saveToPhotoAlbum = args.getBoolean(9);
             this.maxSelectedLimit = args.getInt(12);
-            if(this.maxSelectedLimit == 0) {
+            if(this.maxSelectedLimit <= 0) {
                 this.maxSelectedLimit = 1;
             }
 
