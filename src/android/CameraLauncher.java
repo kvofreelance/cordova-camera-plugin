@@ -122,7 +122,7 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
             this.encodingType = JPEG;
             this.mediaType = PICTURE;
             this.mQuality = 80;
-            this.maxSelectedLimit = 0;
+            this.maxSelectedLimit = 1;
 
             this.mQuality = args.getInt(0);
             destType = args.getInt(1);
@@ -135,6 +135,9 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
             this.correctOrientation = args.getBoolean(8);
             this.saveToPhotoAlbum = args.getBoolean(9);
             this.maxSelectedLimit = args.getInt(12);
+            if(this.maxSelectedLimit == 0) {
+                this.maxSelectedLimit = 1;
+            }
 
             // If the user specifies a 0 or smaller width/height
             // make it -1 so later comparisons succeed
