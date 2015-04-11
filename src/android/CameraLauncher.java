@@ -306,12 +306,17 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
             Intent intent = new Intent();
             String title = GET_PICTURE;
             if (this.mediaType == PICTURE) {
-                if(this.maxSelectedLimit != 0) {
+                //if(this.maxSelectedLimit != 0) {
                     intent = new Intent(this.cordova.getActivity(), AlbumActivity.class);
                     intent.putExtra("maxSelectedLimit", this.maxSelectedLimit);
-                } else {
-                    intent.setType("image/*");
+                //} else {
+                //    intent.setType("image/*");
+                //}
+
+                if (this.cordova != null) {
+                    this.cordova.startActivityForResult((CordovaPlugin) this, intent, (srcType + 1) * 16 + returnType + 1);
                 }
+                return;
             }
             else if (this.mediaType == VIDEO) {
                 /*intent = new Intent(Intent.ACTION_GET_CONTENT);
